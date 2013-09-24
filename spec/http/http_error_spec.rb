@@ -14,19 +14,29 @@ describe "Yajl HTTP error" do
     @uri = 'file://'+File.expand_path(File.dirname(__FILE__) + "/fixtures/http/http.error.dump")
     TCPSocket.should_receive(:new).and_return(@request)
     @request.should_receive(:write)
+  end
 
-    begin
-      Yajl::HttpStream.get(@uri)
-    rescue Yajl::HttpStream::HttpError => e
-      @error = e
+  context "(without skip_http_error option)" do
+    before(:all) do
+      begin
+        Yajl::HttpStream.get(@uri)
+      rescue Yajl::HttpStream::HttpError => e
+        @error = e
+      end
+    end
+    it "should contain the error code in the message" do
+      @error.message.should match(/404/)
+    end
+
+    it "should provide the HTTP response headers" do
+      @error.headers.keys.should include('ETag', 'Content-Length', 'Server')
     end
   end
 
-  it "should contain the error code in the message" do
-    @error.message.should match(/404/)
+  context "(with skip_http_error option)" do
+    it "should not raise error if opts['skip_http_error'] == true" do
+      lambda { Yajl::HttpStream.get(@uri, :skip_http_error => true) }.should_not raise_error(Yajl::HttpStream::HttpError)
+    end
   end
 
-  it "should provide the HTTP response headers" do
-    @error.headers.keys.should include('ETag', 'Content-Length', 'Server')
-  end
 end

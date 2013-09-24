@@ -151,7 +151,8 @@ module Yajl
           end
         end
 
-        if (response_head[:code] != 200)
+        skip_http_error = opts.delete(:skip_http_error) { false }
+        if (response_head[:code] != 200 and not skip_http_error)
           raise HttpError.new("Code 200 expected got #{response_head[:code]}", response_head[:headers])
         end
 
